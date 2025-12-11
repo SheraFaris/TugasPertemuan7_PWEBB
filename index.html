@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Contact Us</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .contact-wrapper {
+      width: 600px;
+      margin: 30px auto;
+      border: 1px solid #ccc;
+      display: flex;
+      font-size: 14px;
+    }
+
+    .contact-left {
+      flex: 1;
+      padding: 15px;
+    }
+
+    .contact-right {
+      width: 220px;
+      background: #e0e0e0;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .contact-right h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .contact-right p {
+      margin-top: 40px;
+      font-size: 12px;
+    }
+
+    label {
+      display: inline-block;
+      width: 60px;
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+      padding: 5px 5px 2px 5px;
+      border: 1px solid transparent;
+    }
+
+    .form-group input {
+      width: 70%;
+      padding: 5px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+    }
+
+    .form-group.error {
+      border: 2px dashed red;
+      background: #ffecec;
+    }
+
+    .form-group small {
+      display: block;
+      margin-left: 60px;
+      margin-top: 3px;
+      font-size: 11px;
+      color: red;
+      visibility: hidden;
+    }
+
+    .form-group.error small {
+      visibility: visible;
+    }
+
+    #sendBtn {
+      margin-left: 60px;
+      padding: 5px 15px;
+      border: 1px solid #000;
+      background: #000;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    #sendBtn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    #result {
+      margin-top: 10px;
+      margin-left: 60px;
+      font-size: 12px;
+    }
+
+    #result.success { color: green; }
+    #result.error { color: red; }
+  </style>
+</head>
+<body>
+
+<div class="contact-wrapper">
+  <div class="contact-left">
+    <form id="contactForm" novalidate>
+      <div class="form-group" id="group-name">
+        <label for="name">Name</label>
+        <input type="text" id="name" />
+        <small>Please enter at least 3 characters.</small>
+      </div>
+
+      <div class="form-group" id="group-email">
+        <label for="email">Email</label>
+        <input type="text" id="email" />
+        <small>Please enter a valid email address.</small>
+      </div>
+
+      <div class="form-group" id="group-phone">
+        <label for="phone">Phone</label>
+        <input type="text" id="phone" placeholder="856-261-9988" />
+      </div>
+
+      <button type="submit" id="sendBtn">Send</button>
+      <div id="result"></div>
+    </form>
+  </div>
+
+  <div class="contact-right">
+    <h1>CONTACT<br>US</h1>
+    <p>We are waiting to hear from you!</p>
+  </div>
+</div>
+
+<script>
+  const form   = document.getElementById('contactForm');
+  const nameEl = document.getElementById('name');
+  const emailEl= document.getElementById('email');
+  const phoneEl= document.getElementById('phone');
+  const result = document.getElementById('result');
+  const btn    = document.getElementById('sendBtn');
+
+  function setError(groupId, isError) {
+    const group = document.getElementById(groupId);
+    if (isError) group.classList.add('error');
+    else group.classList.remove('error');
+  }
+
+  function validate() {
+    let ok = true;
+
+    // Name: min 3 karakter
+    if (nameEl.value.trim().length < 3) {
+      setError('group-name', true);
+      ok = false;
+    } else {
+      setError('group-name', false);
+    }
+
+    // Email: regex sederhana
+    const emailVal = emailEl.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailVal)) {
+      setError('group-email', true);
+      ok = false;
+    } else {
+      setError('group-email', false);
+    }
+
+    return ok;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    result.textContent = '';
+    result.className = '';
+
+    if (!validate()) return;
+
+    // data yang akan dikirim via AJAX
+    const payload = {
+      name:  nameEl.value.trim(),
+      email: emailEl.value.trim(),
+      phone: phoneEl.value.trim()
+    };
+
+    btn.disabled = true;
+
+    // AJAX dengan fetch (POST JSON ke server)
+    fetch('contact.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false;
+      if (data.success) {
+        result.textContent = data.message || 'Message sent!';
+        result.className = 'success';
+        form.reset();
+      } else {
+        result.textContent = data.message || 'Failed to send message.';
+        result.className = 'error';
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      result.textContent = 'Error connecting to server.';
+      result.className = 'error';
+      console.error(err);
+    });
+  });
+</script>
+
+</body>
+</html>
